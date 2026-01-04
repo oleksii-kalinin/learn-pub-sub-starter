@@ -35,6 +35,7 @@ func main() {
 
 	publishCh, err := conn.Channel()
 	FailOnError(err, "Error opening channel")
+	defer publishCh.Close()
 	fmt.Println("Starting Peril server...")
 
 	gamelogic.PrintServerHelp()
