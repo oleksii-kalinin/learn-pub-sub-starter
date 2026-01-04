@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
 
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
@@ -33,8 +32,33 @@ func main() {
 	ch, _, err := pubsub.DeclareAndBind(client, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.TransientQueue)
 	defer ch.Close()
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	<-c
-	log.Println("Exiting")
+	state := gamelogic.NewGameState(msg)
+	for {
+		words := gamelogic.GetInput()
+		if len(words) == 0 {
+			continue
+		}
+		switch words[0] {
+		case "spawn":
+			err = state.CommandSpawn(words)
+			log.Println(err)
+		case "move":
+			_, err = state.CommandMove(words)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			log.Println("move ok")
+		case "status":
+			state.CommandStatus()
+		case "spam":
+			log.Println("no spam!")
+		case "quit":
+			gamelogic.PrintQuit()
+			//break StateLoop
+			return
+		default:
+			log.Println("unknown command")
+		}
+	}
 }

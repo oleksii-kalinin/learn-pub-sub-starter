@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
 
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
@@ -19,19 +18,26 @@ func FailOnError(err error, msg string) {
 }
 
 func main() {
-	server, err := amqp.Dial(os.Getenv("AMQP_URL"))
+	conn, err := amqp.Dial(os.Getenv("AMQP_URL"))
 	FailOnError(err, "Failed to connect to AMQP")
 	defer func(conn *amqp.Connection) {
 		err = conn.Close()
 		FailOnError(err, "Unable to close AMQP connection")
-	}(server)
+	}(conn)
 
-	mq, err := server.Channel()
+	routingKey := fmt.Sprintf("%s.*", routing.GameLogSlug)
+
+	_, queue, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic, routing.GameLogSlug, routingKey, pubsub.DurableQueue)
+	if err != nil {
+		log.Fatalf("could not subscribe to pause: %v", err)
+	}
+	fmt.Printf("Queue %v declared and bound!\n", queue.Name)
+
+	publishCh, err := conn.Channel()
 	FailOnError(err, "Error opening channel")
 	fmt.Println("Starting Peril server...")
 
 	gamelogic.PrintServerHelp()
-GameLoop:
 	for {
 		input := gamelogic.GetInput()
 		if len(input) <= 0 {
@@ -40,25 +46,20 @@ GameLoop:
 		switch input[0] {
 		case "pause":
 			log.Println("sending pause message")
-			err = pubsub.PublishJSON(mq, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: true})
+			err = pubsub.PublishJSON(publishCh, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: true})
 			FailOnError(err, "")
 
 		case "resume":
 			log.Println("sending resume message")
-			err = pubsub.PublishJSON(mq, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: false})
+			err = pubsub.PublishJSON(publishCh, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{IsPaused: false})
 			FailOnError(err, "")
 
 		case "quit":
 			log.Println("quitting")
-			break GameLoop
+			return
 		default:
 			log.Println("unknow command")
 			break
 		}
 	}
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	<-c
-	log.Println("Exiting")
 }
