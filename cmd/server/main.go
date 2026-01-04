@@ -22,7 +22,9 @@ func main() {
 	FailOnError(err, "Failed to connect to AMQP")
 	defer func(conn *amqp.Connection) {
 		err = conn.Close()
-		FailOnError(err, "Unable to close AMQP connection")
+		if err != nil {
+			log.Printf("Warning: Unable to close AMQP connection: %s", err)
+		}
 	}(conn)
 
 	routingKey := fmt.Sprintf("%s.*", routing.GameLogSlug)
@@ -59,7 +61,7 @@ func main() {
 			log.Println("quitting")
 			return
 		default:
-			log.Println("unknow command")
+			log.Println("unknown command")
 			break
 		}
 	}
