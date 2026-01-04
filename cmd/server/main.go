@@ -29,7 +29,7 @@ func main() {
 
 	_, queue, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic, routing.GameLogSlug, routingKey, pubsub.DurableQueue)
 	if err != nil {
-		log.Fatalf("could not subscribe to pause: %v", err)
+		log.Fatalf("could not declare and bind game logs queue: %v", err)
 	}
 	fmt.Printf("Queue %v declared and bound!\n", queue.Name)
 
