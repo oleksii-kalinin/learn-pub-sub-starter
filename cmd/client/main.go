@@ -41,7 +41,9 @@ func main() {
 		switch words[0] {
 		case "spawn":
 			err = state.CommandSpawn(words)
-			log.Println(err)
+			if err != nil {
+				log.Println(err)
+			}
 		case "move":
 			_, err = state.CommandMove(words)
 			if err != nil {
