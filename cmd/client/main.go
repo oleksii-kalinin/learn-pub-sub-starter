@@ -22,7 +22,7 @@ func main() {
 	FailOnError(err, "Failed to connect to AMQP")
 	defer func(client *amqp.Connection) {
 		err = client.Close()
-		FailOnError(err, "Unable to close AMQP connection")
+		log.Fatalln(err)
 	}(client)
 	fmt.Println("Starting Peril client...")
 
@@ -31,7 +31,8 @@ func main() {
 
 	ch, _, err := pubsub.DeclareAndBind(client, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.TransientQueue)
 	defer func(ch *amqp.Channel) {
-		ch.Close()
+		err = ch.Close()
+		log.Fatalln(err)
 	}(ch)
 
 	state := gamelogic.NewGameState(msg)

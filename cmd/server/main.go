@@ -41,6 +41,7 @@ func main() {
 	fmt.Println("Starting Peril server...")
 
 	gamelogic.PrintServerHelp()
+Outer:
 	for {
 		input := gamelogic.GetInput()
 		if len(input) <= 0 {
@@ -62,7 +63,7 @@ func main() {
 			return
 		default:
 			log.Println("unknown command")
-			break
+			break Outer
 		}
 	}
 }
