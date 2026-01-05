@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/gamelogic"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/pubsub"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -22,7 +22,7 @@ func main() {
 	FailOnError(err, "Failed to connect to AMQP")
 	defer func(client *amqp.Connection) {
 		err = client.Close()
-		log.Fatalln(err)
+		log.Printf("Warning: Unable to close AMQP connection: %s", err)
 	}(client)
 	fmt.Println("Starting Peril client...")
 
@@ -32,7 +32,7 @@ func main() {
 	ch, _, err := pubsub.DeclareAndBind(client, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.TransientQueue)
 	defer func(ch *amqp.Channel) {
 		err = ch.Close()
-		log.Fatalln(err)
+		log.Printf("Warning: Unable to close AMQP channel: %s", err)
 	}(ch)
 
 	state := gamelogic.NewGameState(msg)

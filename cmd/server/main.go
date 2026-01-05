@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/gamelogic"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/pubsub"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -41,7 +41,7 @@ func main() {
 	fmt.Println("Starting Peril server...")
 
 	gamelogic.PrintServerHelp()
-Outer:
+	// Outer:
 	for {
 		input := gamelogic.GetInput()
 		if len(input) <= 0 {
@@ -63,7 +63,8 @@ Outer:
 			return
 		default:
 			log.Println("unknown command")
-			break Outer
+			return
+			// break Outer
 		}
 	}
 }
