@@ -53,7 +53,10 @@ func SubscribeJSON[T any](conn *amqp.Connection, exchange, queueName, key string
 				continue
 			}
 			handler(v)
-			msg.Ack(false)
+			err = msg.Ack(false)
+			if err != nil {
+				log.Println("unable to parse json")
+			}
 		}
 	}()
 

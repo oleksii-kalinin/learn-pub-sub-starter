@@ -22,7 +22,9 @@ func main() {
 	FailOnError(err, "Failed to connect to AMQP")
 	defer func(client *amqp.Connection) {
 		err = client.Close()
-		log.Printf("Warning: Unable to close AMQP connection: %s", err)
+		if err != nil {
+			log.Printf("Warning: Unable to close AMQP connection: %s", err)
+		}
 	}(client)
 	publishCh, err := client.Channel()
 	if err != nil {
@@ -37,12 +39,12 @@ func main() {
 
 	err = pubsub.SubscribeJSON(client, routing.ExchangePerilDirect, routing.PauseKey+"."+state.GetUsername(), routing.PauseKey, pubsub.TransientQueue, handlerPause(state))
 	if err != nil {
-		log.Println(err)
+		FailOnError(err, "unable to subscribe to pause")
 	}
 
 	err = pubsub.SubscribeJSON(client, routing.ExchangePerilTopic, routing.ArmyMovesPrefix+"."+state.GetUsername(), routing.ArmyMovesPrefix+".*", pubsub.TransientQueue, handlerMove(state))
 	if err != nil {
-		log.Println(err)
+		FailOnError(err, "unable to subscribe to move")
 	}
 
 	for {
