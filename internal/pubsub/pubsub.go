@@ -28,21 +28,25 @@ func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 	return err
 }
 
+// SubscribeJSON subscribes to the exchange with queueName and key for the routing
 func SubscribeJSON[T any](conn *amqp.Connection, exchange, queueName, key string, queueType SimpleQueueType, handler func(T)) error {
-	channel, _, err := DeclareAndBind(conn, exchange, queueName, key, queueType)
+	channel, queue, err := DeclareAndBind(conn, exchange, queueName, key, queueType)
 	if err != nil {
 		log.Println("unable to bind")
 		return err
 	}
+	//defer channel.Close()
 
-	consumer, err := channel.Consume(queueName, "", false, false, false, false, nil)
+	consumer, err := channel.Consume(queue.Name, "", false, false, false, false, nil)
 	if err != nil {
 		log.Println("unable to create consumer")
 		return err
 	}
 	go func() {
+		defer channel.Close()
 		for msg := range consumer {
 			var v T
+
 			err = json.Unmarshal(msg.Body, &v)
 			if err != nil {
 				log.Println("unable to parse json")
