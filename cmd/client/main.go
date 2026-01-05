@@ -30,7 +30,9 @@ func main() {
 	queueName := fmt.Sprintf("%s.%s", routing.PauseKey, msg)
 
 	ch, _, err := pubsub.DeclareAndBind(client, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.TransientQueue)
-	defer ch.Close()
+	defer func(ch *amqp.Channel) {
+		ch.Close()
+	}(ch)
 
 	state := gamelogic.NewGameState(msg)
 	for {
