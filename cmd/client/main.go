@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/gamelogic"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/pubsub"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -22,19 +22,34 @@ func main() {
 	FailOnError(err, "Failed to connect to AMQP")
 	defer func(client *amqp.Connection) {
 		err = client.Close()
-		FailOnError(err, "Unable to close AMQP connection")
+		if err != nil {
+			log.Printf("Warning: Unable to close AMQP connection: %s", err)
+		}
 	}(client)
+	publishCh, err := client.Channel()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer publishCh.Close()
 	fmt.Println("Starting Peril client...")
 
 	msg, err := gamelogic.ClientWelcome()
-	queueName := fmt.Sprintf("%s.%s", routing.PauseKey, msg)
-
-	ch, _, err := pubsub.DeclareAndBind(client, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.TransientQueue)
-	defer func(ch *amqp.Channel) {
-		ch.Close()
-	}(ch)
-
+	if err != nil {
+		log.Println(err)
+	}
 	state := gamelogic.NewGameState(msg)
+
+	err = pubsub.SubscribeJSON(client, routing.ExchangePerilDirect, routing.PauseKey+"."+state.GetUsername(), routing.PauseKey, pubsub.TransientQueue, handlerPause(state))
+	if err != nil {
+		FailOnError(err, "unable to subscribe to pause")
+	}
+
+	err = pubsub.SubscribeJSON(client, routing.ExchangePerilTopic, routing.ArmyMovesPrefix+"."+state.GetUsername(), routing.ArmyMovesPrefix+".*", pubsub.TransientQueue, handlerMove(state))
+	if err != nil {
+		FailOnError(err, "unable to subscribe to move")
+	}
+
 	for {
 		words := gamelogic.GetInput()
 		if len(words) == 0 {
@@ -47,12 +62,17 @@ func main() {
 				log.Println(err)
 			}
 		case "move":
-			_, err = state.CommandMove(words)
+			move, err := state.CommandMove(words)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
-			log.Println("move ok")
+
+			err = pubsub.PublishJSON(publishCh, routing.ExchangePerilTopic, routing.ArmyMovesPrefix+"."+state.GetUsername(), move)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
 		case "status":
 			state.CommandStatus()
 		case "spam":

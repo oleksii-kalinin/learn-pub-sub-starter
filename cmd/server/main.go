@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/gamelogic"
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/pubsub"
-	"github.com/bootdotdev/learn-pub-sub-starter/internal/routing"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/gamelogic"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/pubsub"
+	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -62,7 +62,7 @@ func main() {
 			return
 		default:
 			log.Println("unknown command")
-			break
+			continue
 		}
 	}
 }
