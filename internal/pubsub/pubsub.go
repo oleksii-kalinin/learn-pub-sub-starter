@@ -15,6 +15,14 @@ const (
 	TransientQueue SimpleQueueType = "transient"
 )
 
+type AckType int
+
+const (
+	Ack AckType = iota
+	NackRequeue
+	NackDiscard
+)
+
 func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 	jsonVal, err := json.Marshal(val)
 	if err != nil {
@@ -29,13 +37,12 @@ func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 }
 
 // SubscribeJSON subscribes to the exchange with queueName and key for the routing
-func SubscribeJSON[T any](conn *amqp.Connection, exchange, queueName, key string, queueType SimpleQueueType, handler func(T)) error {
+func SubscribeJSON[T any](conn *amqp.Connection, exchange, queueName, key string, queueType SimpleQueueType, handler func(T) AckType) error {
 	channel, queue, err := DeclareAndBind(conn, exchange, queueName, key, queueType)
 	if err != nil {
 		log.Println("unable to bind")
 		return err
 	}
-	//defer channel.Close()
 
 	consumer, err := channel.Consume(queue.Name, "", false, false, false, false, nil)
 	if err != nil {
@@ -52,8 +59,21 @@ func SubscribeJSON[T any](conn *amqp.Connection, exchange, queueName, key string
 				log.Println("unable to parse json")
 				continue
 			}
-			handler(v)
-			err = msg.Ack(false)
+			ackType := handler(v)
+			switch ackType {
+			case Ack:
+				log.Println("calling ack")
+				err = msg.Ack(false)
+			case NackRequeue:
+				log.Println("calling Neg ack requeue")
+				err = msg.Nack(false, true)
+			case NackDiscard:
+				log.Println("calling Neg ack discard")
+				err = msg.Nack(false, false)
+			default:
+				log.Println("wrong ack event")
+			}
+
 			if err != nil {
 				log.Println("unable to parse json")
 			}
@@ -73,7 +93,11 @@ func DeclareAndBind(conn *amqp.Connection, exchange, queueName, key string, queu
 	autoDelete := queueType == TransientQueue
 	exclusive := queueType == TransientQueue
 
-	q, err := ch.QueueDeclare(queueName, durable, autoDelete, exclusive, false, nil)
+	qTable := amqp.Table{}
+
+	qTable["x-dead-letter-exchange"] = "peril_dlx"
+
+	q, err := ch.QueueDeclare(queueName, durable, autoDelete, exclusive, false, qTable)
 	if err != nil {
 		ch.Close()
 		return nil, amqp.Queue{}, err
