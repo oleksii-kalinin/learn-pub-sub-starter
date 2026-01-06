@@ -62,7 +62,7 @@ func main() {
 			return
 		default:
 			log.Println("unknown command")
-			return
+			continue
 		}
 	}
 }
