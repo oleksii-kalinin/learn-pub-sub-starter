@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ func FailOnError(err error, msg string) {
 	}
 }
 
-func main() {
+func Serve() {
 	conn, err := amqp.Dial(os.Getenv("AMQP_URL"))
 	FailOnError(err, "Failed to connect to AMQP")
 	defer func(conn *amqp.Connection) {
