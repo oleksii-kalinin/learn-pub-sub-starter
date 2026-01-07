@@ -91,6 +91,10 @@ func main() {
 				log.Println("unable to parse count")
 				continue
 			}
+			if cnt <= 0 {
+				log.Println("count must be positive")
+				continue
+			}
 			for _ = range cnt {
 				msg := gamelogic.GetMaliciousLog()
 				err = publishGameLog(publishCh, state, msg)
