@@ -104,7 +104,7 @@ func Start(amqpUrl string) error {
 			}
 		case "quit":
 			gamelogic.PrintQuit()
-			return err
+			return nil
 		default:
 			log.Println("unknown command")
 		}
