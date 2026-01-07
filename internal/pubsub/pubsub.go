@@ -87,7 +87,7 @@ func Subscribe[T any](conn *amqp.Connection, exchange, queueName, key string, qu
 		log.Println("unable to bind")
 		return err
 	}
-	if err = channel.Qos(10, 0, false); err == nil {
+	if err = channel.Qos(10, 0, false); err != nil {
 		log.Print(err)
 	}
 
