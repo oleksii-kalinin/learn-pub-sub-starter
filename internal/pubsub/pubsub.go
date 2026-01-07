@@ -99,7 +99,9 @@ func Subscribe[T any](conn *amqp.Connection, exchange, queueName, key string, qu
 			v, err := unmarshaller(msg.Body)
 			if err != nil {
 				log.Printf("unmarshal error: %v", err)
-				err = msg.Nack(false, false)
+				if nackErr := msg.Nack(false, false); nackErr != nil {
+					log.Printf("nack failed after unmarshal error: %v", nackErr)
+				}
 				continue
 			}
 			ackType := handler(v)
