@@ -28,6 +28,5 @@ func init() {
 	if defaultUrl == "" {
 		defaultUrl = "amqp://guest:guest@192.168.1.20:5672"
 	}
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.Flags().StringVar(&amqpUrl, "amqp-url", defaultUrl, "URL for AMQP broker")
 }
