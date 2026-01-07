@@ -38,53 +38,6 @@ func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 	return err
 }
 
-// // SubscribeJSON subscribes to the exchange with queueName and key for the routing
-// func SubscribeJSON[T any](conn *amqp.Connection, exchange, queueName, key string, queueType SimpleQueueType, handler func(T) AckType) error {
-// 	channel, queue, err := DeclareAndBind(conn, exchange, queueName, key, queueType)
-// 	if err != nil {
-// 		log.Println("unable to bind")
-// 		return err
-// 	}
-
-// 	consumer, err := channel.Consume(queue.Name, "", false, false, false, false, nil)
-// 	if err != nil {
-// 		log.Println("unable to create consumer")
-// 		return err
-// 	}
-// 	go func() {
-// 		defer channel.Close()
-// 		for msg := range consumer {
-// 			var v T
-
-// 			err = json.Unmarshal(msg.Body, &v)
-// 			if err != nil {
-// 				log.Println("unable to parse json")
-// 				continue
-// 			}
-// 			ackType := handler(v)
-// 			switch ackType {
-// 			case Ack:
-// 				log.Println("calling ack")
-// 				err = msg.Ack(false)
-// 			case NackRequeue:
-// 				log.Println("calling Neg ack requeue")
-// 				err = msg.Nack(false, true)
-// 			case NackDiscard:
-// 				log.Println("calling Neg ack discard")
-// 				err = msg.Nack(false, false)
-// 			default:
-// 				log.Println("wrong ack event")
-// 			}
-
-// 			if err != nil {
-// 				log.Println("unable to parse json")
-// 			}
-// 		}
-// 	}()
-
-// 	return nil
-// }
-
 func DeclareAndBind(conn *amqp.Connection, exchange, queueName, key string, queueType SimpleQueueType) (*amqp.Channel, amqp.Queue, error) {
 	ch, err := conn.Channel()
 	if err != nil {
@@ -143,13 +96,10 @@ func Subscribe[T any](conn *amqp.Connection, exchange, queueName, key string, qu
 	go func() {
 		defer channel.Close()
 		for msg := range consumer {
-			var v T
-
-			// err = json.Unmarshal(msg.Body, &v)
-			v, err = unmarshaller(msg.Body)
+			v, err := unmarshaller(msg.Body)
 			if err != nil {
 				log.Printf("unmarshal error: %v", err)
-				msg.Nack(false, false) // Відхилити і не повертати в чергу (Discard)
+				err = msg.Nack(false, false)
 				continue
 			}
 			ackType := handler(v)
@@ -176,13 +126,13 @@ func Subscribe[T any](conn *amqp.Connection, exchange, queueName, key string, qu
 	return nil
 }
 
-func JsonUnarmshal[T any](data []byte) (T, error) {
+func JsonUnmarshal[T any](data []byte) (T, error) {
 	var target T
 	err := json.Unmarshal(data, &target)
 	return target, err
 }
 
-func GobUnarmshal[T any](data []byte) (T, error) {
+func GobUnmarshal[T any](data []byte) (T, error) {
 	var target T
 	buffer := bytes.NewBuffer(data)
 	dec := gob.NewDecoder(buffer)

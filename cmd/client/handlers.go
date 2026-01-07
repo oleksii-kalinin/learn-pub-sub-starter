@@ -80,15 +80,11 @@ func handlerWar(gs *gamelogic.GameState, channel *amqp091.Channel) func(msg game
 }
 
 func publishGameLog(channel *amqp091.Channel, gs *gamelogic.GameState, message string) error {
-	log := &routing.GameLog{
+	gameLog := &routing.GameLog{
 		CurrentTime: time.Now().UTC(),
 		Message:     message,
 		Username:    gs.GetUsername(),
 	}
 
-	err := pubsub.PublishGob(channel, routing.ExchangePerilTopic, routing.GameLogSlug+"."+gs.GetUsername(), log)
-	if err != nil {
-		return err
-	}
-	return nil
+	return pubsub.PublishGob(channel, routing.ExchangePerilTopic, routing.GameLogSlug+"."+gs.GetUsername(), gameLog)
 }

@@ -27,20 +27,11 @@ func main() {
 		}
 	}(conn)
 
-	routingKey := fmt.Sprintf("%s.*", routing.GameLogSlug)
-
-	_, queue, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilTopic, routing.GameLogSlug, routingKey, pubsub.DurableQueue)
-	if err != nil {
-		log.Fatalf("could not declare and bind game logs queue: %v", err)
-	}
-	fmt.Printf("Queue %v declared and bound!\n", queue.Name)
-
 	publishCh, err := conn.Channel()
 	FailOnError(err, "Error opening channel")
 	defer publishCh.Close()
 
-	defer fmt.Print("> ")
-	err = pubsub.Subscribe(conn, routing.ExchangePerilTopic, routing.GameLogSlug, "*", pubsub.DurableQueue, handlerLog, pubsub.GobUnarmshal[routing.GameLog])
+	err = pubsub.Subscribe(conn, routing.ExchangePerilTopic, routing.GameLogSlug, "*", pubsub.DurableQueue, handlerLog, pubsub.GobUnmarshal[routing.GameLog])
 	if err != nil {
 		FailOnError(err, "unable to subscribe to logs")
 	}
