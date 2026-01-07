@@ -87,7 +87,7 @@ func Subscribe[T any](conn *amqp.Connection, exchange, queueName, key string, qu
 		log.Println("unable to bind")
 		return err
 	}
-
+	_ = channel.Qos(10, 0, false)
 	consumer, err := channel.Consume(queue.Name, "", false, false, false, false, nil)
 	if err != nil {
 		log.Println("unable to create consumer")
