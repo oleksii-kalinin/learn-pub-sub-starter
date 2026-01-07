@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/pubsub"
@@ -81,10 +82,29 @@ func main() {
 		case "status":
 			state.CommandStatus()
 		case "spam":
-			log.Println("no spam!")
+			if len(words) < 2 {
+				log.Println("spam count should be provided")
+				continue
+			}
+			cnt, err := strconv.ParseInt(words[1], 10, 32)
+			if err != nil {
+				log.Println("unable to parse count")
+				continue
+			}
+			if cnt <= 0 {
+				log.Println("count must be positive")
+				continue
+			}
+			for _ = range cnt {
+				msg := gamelogic.GetMaliciousLog()
+				err = publishGameLog(publishCh, state, msg)
+				if err != nil {
+					log.Println("unable to send spam message")
+					continue
+				}
+			}
 		case "quit":
 			gamelogic.PrintQuit()
-			//break StateLoop
 			return
 		default:
 			log.Println("unknown command")
