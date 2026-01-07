@@ -56,7 +56,7 @@ func Serve(amqpUrl string) error {
 
 		case "quit":
 			log.Println("quitting")
-			return err
+			return nil
 		default:
 			log.Println("unknown command")
 			continue
