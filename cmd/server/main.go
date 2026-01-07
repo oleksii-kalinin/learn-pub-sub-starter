@@ -38,6 +38,13 @@ func main() {
 	publishCh, err := conn.Channel()
 	FailOnError(err, "Error opening channel")
 	defer publishCh.Close()
+
+	defer fmt.Print("> ")
+	err = pubsub.Subscribe(conn, routing.ExchangePerilTopic, routing.GameLogSlug, "*", pubsub.DurableQueue, handlerLog, pubsub.GobUnarmshal[routing.GameLog])
+	if err != nil {
+		FailOnError(err, "unable to subscribe to logs")
+	}
+
 	fmt.Println("Starting Peril server...")
 
 	gamelogic.PrintServerHelp()
