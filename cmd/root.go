@@ -1,7 +1,3 @@
-/*
-Copyright © 2026 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
@@ -10,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-
+var amqpUrl string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -37,15 +33,10 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.learn-pub-sub-starter.yaml)")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
+	defaultUrl := os.Getenv("AMQP_URL")
+	if defaultUrl == "" {
+		defaultUrl = "amqp://guest:guest@192.168.1.20:5672"
+	}
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().StringVar(&amqpUrl, "amqp-url", defaultUrl, "URL for AMQP broker")
 }
-
-

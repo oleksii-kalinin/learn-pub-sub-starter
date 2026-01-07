@@ -3,7 +3,6 @@ package client
 import (
 	"fmt"
 	"log"
-	"os"
 	"strconv"
 
 	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/gamelogic"
@@ -18,8 +17,8 @@ func FailOnError(err error, msg string) {
 	}
 }
 
-func Start() {
-	client, err := amqp.Dial(os.Getenv("AMQP_URL"))
+func Start(amqpUrl string) error {
+	client, err := amqp.Dial(amqpUrl)
 	FailOnError(err, "Failed to connect to AMQP")
 	defer func(client *amqp.Connection) {
 		err = client.Close()
@@ -30,7 +29,7 @@ func Start() {
 	publishCh, err := client.Channel()
 	if err != nil {
 		log.Println(err)
-		return
+		return err
 	}
 	defer publishCh.Close()
 	fmt.Println("Starting Peril client...")
@@ -105,7 +104,7 @@ func Start() {
 			}
 		case "quit":
 			gamelogic.PrintQuit()
-			return
+			return err
 		default:
 			log.Println("unknown command")
 		}

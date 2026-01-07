@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/oleksii-kalinin/learn-pub-sub-starter/internal/pubsub"
@@ -17,8 +16,8 @@ func FailOnError(err error, msg string) {
 	}
 }
 
-func Serve() {
-	conn, err := amqp.Dial(os.Getenv("AMQP_URL"))
+func Serve(amqpUrl string) error {
+	conn, err := amqp.Dial(amqpUrl)
 	FailOnError(err, "Failed to connect to AMQP")
 	defer func(conn *amqp.Connection) {
 		err = conn.Close()
@@ -57,7 +56,7 @@ func Serve() {
 
 		case "quit":
 			log.Println("quitting")
-			return
+			return err
 		default:
 			log.Println("unknown command")
 			continue
