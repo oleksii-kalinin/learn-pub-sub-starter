@@ -40,20 +40,21 @@ func main() {
 	}
 	state := gamelogic.NewGameState(msg)
 
-	err = pubsub.SubscribeJSON(client, routing.ExchangePerilDirect, routing.PauseKey+"."+state.GetUsername(), routing.PauseKey, pubsub.TransientQueue, handlerPause(state, publishCh))
+	err = pubsub.Subscribe(client, routing.ExchangePerilDirect, routing.PauseKey+"."+state.GetUsername(), routing.PauseKey, pubsub.TransientQueue, handlerPause(state, publishCh), pubsub.JsonUnmarshal[routing.PlayingState])
 	if err != nil {
 		FailOnError(err, "unable to subscribe to pause")
 	}
 
-	err = pubsub.SubscribeJSON(client, routing.ExchangePerilTopic, routing.ArmyMovesPrefix+"."+state.GetUsername(), routing.ArmyMovesPrefix+".*", pubsub.TransientQueue, handlerMove(state, publishCh))
+	err = pubsub.Subscribe(client, routing.ExchangePerilTopic, routing.ArmyMovesPrefix+"."+state.GetUsername(), routing.ArmyMovesPrefix+".*", pubsub.TransientQueue, handlerMove(state, publishCh), pubsub.JsonUnmarshal[gamelogic.ArmyMove])
 	if err != nil {
 		FailOnError(err, "unable to subscribe to move")
 	}
 
-	err = pubsub.SubscribeJSON(client, routing.ExchangePerilTopic, routing.WarRecognitionsPrefix, routing.WarRecognitionsPrefix+"."+state.GetUsername(), pubsub.DurableQueue, handlerWar(state))
+	err = pubsub.Subscribe(client, routing.ExchangePerilTopic, routing.WarRecognitionsPrefix, routing.WarRecognitionsPrefix+"."+state.GetUsername(), pubsub.DurableQueue, handlerWar(state, publishCh), pubsub.JsonUnmarshal[gamelogic.RecognitionOfWar])
 	if err != nil {
 		FailOnError(err, "unable to subscribe to war")
 	}
+
 	for {
 		words := gamelogic.GetInput()
 		if len(words) == 0 {
